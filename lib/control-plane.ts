@@ -3,7 +3,6 @@ import { Stack } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as dotenv from 'dotenv';
 
-// Load environment variables from .env file
 dotenv.config();
 
 export class ControlPlaneStack extends Stack {
@@ -12,8 +11,9 @@ export class ControlPlaneStack extends Stack {
 
   constructor(scope: Construct, id: string, props?: any) {
     super(scope, id, props);
+
     const cognitoAuth = new sbt.CognitoAuth(this, 'CognitoAuth', {
-      // Avoid checking scopes for API endpoints. Done only for testing purposes.
+      // Avoid checking scopes for API endpoints. for testing purposes.
       setAPIGWScopes: false,
     });
 
@@ -22,11 +22,8 @@ export class ControlPlaneStack extends Stack {
       systemAdminEmail: process.env.SYSTEM_ADMIN_EMAIL || 'default@example.com',
     });
 
+    // ここで公開プロパティを設定
     this.eventManager = controlPlane.eventManager;
     this.regApiGatewayUrl = controlPlane.controlPlaneAPIGatewayUrl;
-  }
-
-  public getEventManager(): sbt.IEventManager {
-    return this.eventManager;
   }
 }

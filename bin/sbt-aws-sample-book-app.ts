@@ -6,7 +6,7 @@ import 'source-map-support/register';
 
 const app = new cdk.App();
 
-new ControlPlaneStack(app, 'ControlPlaneStack', {});
-new AppPlaneStack(app, 'AppPlaneStack', {
-  eventManager: ControlPlaneStack.eventManager,
+const controlPlaneStack = new ControlPlaneStack(app, 'ControlPlaneStack', {});
+const appPlaneStack = new AppPlaneStack(app, 'AppPlaneStack', {
+  eventManager: controlPlaneStack.eventManager,
 });

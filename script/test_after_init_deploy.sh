@@ -75,9 +75,19 @@ DATA=$(jq --null-input \
   "tenantStatus": "In progress"
 }')
 
+echo "Be creating data below..."
+echo $DATA
+
+# 以降を続行する場合にはyを入力してください
+read -p "Do you want to continue? (y/n): " yn
+if [ $yn != "y" ]; then
+  echo "Aborted."
+  exit 1
+fi
+
 echo "creating tenant..."
 curl --request POST \
-    --url "${CONTROL_PLANE_API_ENDPOINT}tenants" \
+    --url "${CONTROL_PLANE_API_ENDPOINT}tenant-registrations" \
     --header "Authorization: Bearer ${ACCESS_TOKEN}" \
     --header 'content-type: application/json' \
     --data "$DATA" | jq

@@ -63,6 +63,7 @@ echo "done!"
       //   'tenantConfig',
       //   'tenantStatus',
       // ],
+      //　sbtのバージョンに合わせて修正
       environmentVariablesToOutgoingEvent: {
         'tenantRegistrationData': [],
         'tenantData': [],

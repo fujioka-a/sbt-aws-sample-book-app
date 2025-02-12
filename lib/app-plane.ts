@@ -5,6 +5,7 @@ import { PolicyDocument, PolicyStatement, Effect } from 'aws-cdk-lib/aws-iam';
 
 export interface AppPlaneProps extends cdk.StackProps {
   eventManager: sbt.IEventManager;
+  billingProvider: sbt.MockBillingProvider;
 }
 export class AppPlaneStack extends cdk.Stack {
   constructor(scope: cdk.App, id: string, props: AppPlaneProps) {
@@ -70,6 +71,7 @@ echo "done!"
       },
       scriptEnvironmentVariables: {
         TEST: 'test',
+        PROD: 'prod',
       },
       eventManager: props.eventManager,
     };

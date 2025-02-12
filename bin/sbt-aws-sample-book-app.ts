@@ -9,4 +9,5 @@ const app = new cdk.App();
 const controlPlaneStack = new ControlPlaneStack(app, 'ControlPlaneStack', {});
 const appPlaneStack = new AppPlaneStack(app, 'AppPlaneStack', {
   eventManager: controlPlaneStack.eventManager,
+  billingProvider: controlPlaneStack.billingProvider,
 });

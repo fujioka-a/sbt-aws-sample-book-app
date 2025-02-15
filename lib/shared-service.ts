@@ -30,21 +30,16 @@ export class TodoStack extends cdk.Stack {
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
-      // 必要に応じて bundling オプションなどを指定できます
-      // bundling: {
-      //   externalModules: ['aws-sdk'], // など
-      // },
     };
 
-    // getTodos用Lambda
+    // 各種Lambda
     const getTodosFunction = new NodejsFunction(this, 'GetTodosFunction', {
       ...commonNodejsFunctionProps,
-      entry: 'src/todo_handler.ts',      // ビルド対象のTSファイルを指定
-      handler: 'getTodosHandler',        // todo_handler.ts内のexport関数名
+      entry: 'src/todo_handler.ts',
+      handler: 'getTodosHandler',
     });
     table.grantReadWriteData(getTodosFunction);
 
-    // getTodo用Lambda
     const getTodoFunction = new NodejsFunction(this, 'GetTodoFunction', {
       ...commonNodejsFunctionProps,
       entry: 'src/todo_handler.ts',
@@ -52,7 +47,6 @@ export class TodoStack extends cdk.Stack {
     });
     table.grantReadWriteData(getTodoFunction);
 
-    // createTodo用Lambda
     const createTodoFunction = new NodejsFunction(this, 'CreateTodoFunction', {
       ...commonNodejsFunctionProps,
       entry: 'src/todo_handler.ts',
@@ -60,7 +54,6 @@ export class TodoStack extends cdk.Stack {
     });
     table.grantReadWriteData(createTodoFunction);
 
-    // updateTodo用Lambda
     const updateTodoFunction = new NodejsFunction(this, 'UpdateTodoFunction', {
       ...commonNodejsFunctionProps,
       entry: 'src/todo_handler.ts',
@@ -68,7 +61,6 @@ export class TodoStack extends cdk.Stack {
     });
     table.grantReadWriteData(updateTodoFunction);
 
-    // deleteTodo用Lambda
     const deleteTodoFunction = new NodejsFunction(this, 'DeleteTodoFunction', {
       ...commonNodejsFunctionProps,
       entry: 'src/todo_handler.ts',
@@ -82,15 +74,37 @@ export class TodoStack extends cdk.Stack {
       description: 'CRUD operations for Todo tasks.',
     });
 
+    // ----------------------------
+    // Cognitoオーソライザーの定義
+    // ----------------------------
+    const cognitoAuthorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'TodoAuthorizer', {
+      cognitoUserPools: [props.CognitoUserPool],
+    });
+
     // /todos リソース
     const todos = api.root.addResource('todos');
-    todos.addMethod('GET', new apigateway.LambdaIntegration(getTodosFunction));
-    todos.addMethod('POST', new apigateway.LambdaIntegration(createTodoFunction));
+    todos.addMethod('GET', new apigateway.LambdaIntegration(getTodosFunction), {
+      authorizer: cognitoAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+    todos.addMethod('POST', new apigateway.LambdaIntegration(createTodoFunction), {
+      authorizer: cognitoAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
 
     // /todos/{id} リソース
     const todo = todos.addResource('{id}');
-    todo.addMethod('GET', new apigateway.LambdaIntegration(getTodoFunction));
-    todo.addMethod('PUT', new apigateway.LambdaIntegration(updateTodoFunction));
-    todo.addMethod('DELETE', new apigateway.LambdaIntegration(deleteTodoFunction));
+    todo.addMethod('GET', new apigateway.LambdaIntegration(getTodoFunction), {
+      authorizer: cognitoAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+    todo.addMethod('PUT', new apigateway.LambdaIntegration(updateTodoFunction), {
+      authorizer: cognitoAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+    todo.addMethod('DELETE', new apigateway.LambdaIntegration(deleteTodoFunction), {
+      authorizer: cognitoAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
   }
 }

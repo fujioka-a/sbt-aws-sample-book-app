@@ -1,4 +1,3 @@
-// lib/todo-stack.ts
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
@@ -19,8 +18,11 @@ export class TodoStack extends cdk.Stack {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
     });
 
+    // ダミーの handler を設定
     const commonLambdaProps: lambda.FunctionProps = {
       runtime: lambda.Runtime.NODEJS_20_X,
+      // ↓ここで必須のhandlerをダミー値として定義
+      handler: 'dummy.handler',
       code: lambda.Code.fromAsset('src'),
       environment: {
         TABLE_NAME: table.tableName,
@@ -30,6 +32,7 @@ export class TodoStack extends cdk.Stack {
       memorySize: 256,
     };
 
+    // 各Lambdaでhandlerを上書き
     const getTodosFunction = new lambda.Function(this, 'GetTodosFunction', {
       ...commonLambdaProps,
       handler: 'todo_handler.getTodosHandler',
@@ -55,21 +58,25 @@ export class TodoStack extends cdk.Stack {
       handler: 'todo_handler.deleteTodoHandler',
     });
 
+    // テーブルのRead/Write権限を各Lambdaに付与
     table.grantReadWriteData(getTodosFunction);
     table.grantReadWriteData(getTodoFunction);
     table.grantReadWriteData(createTodoFunction);
     table.grantReadWriteData(updateTodoFunction);
     table.grantReadWriteData(deleteTodoFunction);
 
+    // API Gateway作成
     const api = new apigateway.RestApi(this, 'TodoApi', {
       restApiName: 'Todo Service',
       description: 'CRUD operations for Todo tasks.',
     });
 
+    // /todos リソース
     const todos = api.root.addResource('todos');
     todos.addMethod('GET', new apigateway.LambdaIntegration(getTodosFunction));
     todos.addMethod('POST', new apigateway.LambdaIntegration(createTodoFunction));
 
+    // /todos/{id} リソース
     const todo = todos.addResource('{id}');
     todo.addMethod('GET', new apigateway.LambdaIntegration(getTodoFunction));
     todo.addMethod('PUT', new apigateway.LambdaIntegration(updateTodoFunction));

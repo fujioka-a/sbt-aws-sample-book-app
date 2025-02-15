@@ -30,22 +30,22 @@ export class ControlPlaneStack extends Stack {
 
     // const metering = new sbt.MeteringProvider()
 
-    const targetRestApiBase = new aws_apigateway.RestApi(this, 'TargetRestApi', {
-      deployOptions: {
-        stageName: 'test',
-      },
-    });
+    // const targetRestApiBase = new aws_apigateway.RestApi(this, 'TargetRestApi', {
+    //   deployOptions: {
+    //     stageName: 'test',
+    //   },
+    // });
 
-    new sbt.SampleRegistrationWebPage(
-      this,
-      'SampleRegistrationWebPage',
-      {
-        registrationAPI: targetRestApiBase,
-        userProvidedRequiredFieldsForRegistration: ['name', 'email'],
-        // autoDeleteBucketObjects: false,
-        // imageLogoUrl: 'https://example.com/logo.png',
-      }
-    )
+    // new sbt.SampleRegistrationWebPage(
+    //   this,
+    //   'SampleRegistrationWebPage',
+    //   {
+    //     registrationAPI: targetRestApiBase,
+    //     userProvidedRequiredFieldsForRegistration: ['name', 'email'],
+    //     // autoDeleteBucketObjects: false,
+    //     // imageLogoUrl: 'https://example.com/logo.png',
+    //   }
+    // )
 
     const controlPlane = new sbt.ControlPlane(this, 'ControlPlane', {
       auth: cognitoAuth,

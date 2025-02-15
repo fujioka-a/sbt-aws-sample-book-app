@@ -1,0 +1,18 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+  pre_build:
+    commands:
+      - npm install -g aws-cdk
+  build:
+    commands:
+      - echo npm installation
+      - npm ci
+      - echo CDK deployment started on `date`
+      - cdk deploy --require-approval never --all
+  post_build:
+    commands:
+      - echo CDK deployment completed on `date`

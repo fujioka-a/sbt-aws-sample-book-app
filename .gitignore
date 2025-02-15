@@ -42,3 +42,5 @@ Thumbs.db
 # specific to this project
 memo/
 tools/
+
+*.zip

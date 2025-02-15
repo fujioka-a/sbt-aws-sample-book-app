@@ -3,6 +3,9 @@ import { Stack, aws_apigateway } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as dotenv from 'dotenv';
 
+import * as cognito from 'aws-cdk-lib/aws-cognito';
+
+
 dotenv.config();
 
 export class ControlPlaneStack extends Stack {
@@ -10,6 +13,8 @@ export class ControlPlaneStack extends Stack {
   public readonly eventManager: sbt.IEventManager;
   // ↓ MockBillingProviderそのものを保持したい場合
   public readonly billingProvider: sbt.MockBillingProvider;
+
+  public readonly userPool: cognito.UserPool;
 
   constructor(scope: Construct, id: string, props?: any) {
     super(scope, id, props);
@@ -49,5 +54,7 @@ export class ControlPlaneStack extends Stack {
 
     this.eventManager = controlPlane.eventManager;
     this.regApiGatewayUrl = controlPlane.controlPlaneAPIGatewayUrl;
+
+    this.userPool = cognitoAuth.userPool;
   }
 }

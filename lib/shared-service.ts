@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import { NodejsFunction, NodejsFunctionProps } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
@@ -13,59 +14,68 @@ export class TodoStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: ToDoProps) {
     super(scope, id, props);
 
+    // DynamoDBテーブル作成
     const table = new dynamodb.Table(this, 'TodoTable', {
       partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
     });
 
-    // ダミーの handler を設定
-    const commonLambdaProps: lambda.FunctionProps = {
+    // NodejsFunctionで共通化するプロパティ
+    const commonNodejsFunctionProps: NodejsFunctionProps = {
       runtime: lambda.Runtime.NODEJS_20_X,
-      // ↓ここで必須のhandlerをダミー値として定義
-      handler: 'dummy.handler',
-      code: lambda.Code.fromAsset('src'),
       environment: {
         TABLE_NAME: table.tableName,
         COGNITO_USER_POOL_ID: props.CognitoUserPool.userPoolId,
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
+      // 必要に応じて bundling オプションなどを指定できます
+      // bundling: {
+      //   externalModules: ['aws-sdk'], // など
+      // },
     };
 
-    // 各Lambdaでhandlerを上書き
-    const getTodosFunction = new lambda.Function(this, 'GetTodosFunction', {
-      ...commonLambdaProps,
-      handler: 'todo_handler.getTodosHandler',
+    // getTodos用Lambda
+    const getTodosFunction = new NodejsFunction(this, 'GetTodosFunction', {
+      ...commonNodejsFunctionProps,
+      entry: 'src/todo_handler.ts',      // ビルド対象のTSファイルを指定
+      handler: 'getTodosHandler',        // todo_handler.ts内のexport関数名
     });
-
-    const getTodoFunction = new lambda.Function(this, 'GetTodoFunction', {
-      ...commonLambdaProps,
-      handler: 'todo_handler.getTodoHandler',
-    });
-
-    const createTodoFunction = new lambda.Function(this, 'CreateTodoFunction', {
-      ...commonLambdaProps,
-      handler: 'todo_handler.createTodoHandler',
-    });
-
-    const updateTodoFunction = new lambda.Function(this, 'UpdateTodoFunction', {
-      ...commonLambdaProps,
-      handler: 'todo_handler.updateTodoHandler',
-    });
-
-    const deleteTodoFunction = new lambda.Function(this, 'DeleteTodoFunction', {
-      ...commonLambdaProps,
-      handler: 'todo_handler.deleteTodoHandler',
-    });
-
-    // テーブルのRead/Write権限を各Lambdaに付与
     table.grantReadWriteData(getTodosFunction);
+
+    // getTodo用Lambda
+    const getTodoFunction = new NodejsFunction(this, 'GetTodoFunction', {
+      ...commonNodejsFunctionProps,
+      entry: 'src/todo_handler.ts',
+      handler: 'getTodoHandler',
+    });
     table.grantReadWriteData(getTodoFunction);
+
+    // createTodo用Lambda
+    const createTodoFunction = new NodejsFunction(this, 'CreateTodoFunction', {
+      ...commonNodejsFunctionProps,
+      entry: 'src/todo_handler.ts',
+      handler: 'createTodoHandler',
+    });
     table.grantReadWriteData(createTodoFunction);
+
+    // updateTodo用Lambda
+    const updateTodoFunction = new NodejsFunction(this, 'UpdateTodoFunction', {
+      ...commonNodejsFunctionProps,
+      entry: 'src/todo_handler.ts',
+      handler: 'updateTodoHandler',
+    });
     table.grantReadWriteData(updateTodoFunction);
+
+    // deleteTodo用Lambda
+    const deleteTodoFunction = new NodejsFunction(this, 'DeleteTodoFunction', {
+      ...commonNodejsFunctionProps,
+      entry: 'src/todo_handler.ts',
+      handler: 'deleteTodoHandler',
+    });
     table.grantReadWriteData(deleteTodoFunction);
 
-    // API Gateway作成
+    // API Gatewayの作成
     const api = new apigateway.RestApi(this, 'TodoApi', {
       restApiName: 'Todo Service',
       description: 'CRUD operations for Todo tasks.',

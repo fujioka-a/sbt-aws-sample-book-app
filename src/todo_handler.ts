@@ -1,16 +1,37 @@
 // lambda/todo-handler.ts
 
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { DynamoDB } from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
 
-const dynamo = new DynamoDB.DocumentClient();
+// v3のDynamoDBClientと、DocumentClientユーティリティをインポート
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import {
+  DynamoDBDocumentClient,
+  ScanCommand,
+  GetCommand,
+  PutCommand,
+  UpdateCommand,
+  DeleteCommand
+} from '@aws-sdk/lib-dynamodb';
+
 const TABLE_NAME = process.env.TABLE_NAME!;
+
+// ベースのクライアント
+const dynamoClient = new DynamoDBClient({});
+
+// DocumentClient相当のラッパ
+const dynamo = DynamoDBDocumentClient.from(dynamoClient);
 
 export const getTodosHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   console.log('Event:', event);
   try {
-    const data = await dynamo.scan({ TableName: TABLE_NAME }).promise();
+    // ScanCommand で全件取得
+    const data = await dynamo.send(
+      new ScanCommand({
+        TableName: TABLE_NAME,
+      })
+    );
+
     return {
       statusCode: 200,
       body: JSON.stringify(data.Items),
@@ -25,7 +46,14 @@ export const getTodoHandler = async (event: APIGatewayProxyEvent): Promise<APIGa
   console.log('Event:', event);
   try {
     const id = event.pathParameters?.id;
-    const data = await dynamo.get({ TableName: TABLE_NAME, Key: { id } }).promise();
+    // GetCommand
+    const data = await dynamo.send(
+      new GetCommand({
+        TableName: TABLE_NAME,
+        Key: { id },
+      })
+    );
+
     if (!data.Item) {
       return { statusCode: 404, body: JSON.stringify({ message: 'Todo not found' }) };
     }
@@ -45,7 +73,15 @@ export const createTodoHandler = async (event: APIGatewayProxyEvent): Promise<AP
       title: body.title,
       completed: false,
     };
-    await dynamo.put({ TableName: TABLE_NAME, Item: newTodo }).promise();
+
+    // PutCommand
+    await dynamo.send(
+      new PutCommand({
+        TableName: TABLE_NAME,
+        Item: newTodo,
+      })
+    );
+
     return { statusCode: 201, body: JSON.stringify(newTodo) };
   } catch (error) {
     console.error(error);
@@ -58,17 +94,21 @@ export const updateTodoHandler = async (event: APIGatewayProxyEvent): Promise<AP
   try {
     const id = event.pathParameters?.id;
     const body = event.body ? JSON.parse(event.body) : {};
-    const params = {
-      TableName: TABLE_NAME,
-      Key: { id },
-      UpdateExpression: 'set title = :title, completed = :completed',
-      ExpressionAttributeValues: {
-        ':title': body.title,
-        ':completed': body.completed,
-      },
-      ReturnValues: 'ALL_NEW',
-    };
-    const result = await dynamo.update(params).promise();
+
+    // UpdateCommand
+    const result = await dynamo.send(
+      new UpdateCommand({
+        TableName: TABLE_NAME,
+        Key: { id },
+        UpdateExpression: 'set title = :title, completed = :completed',
+        ExpressionAttributeValues: {
+          ':title': body.title,
+          ':completed': body.completed,
+        },
+        ReturnValues: 'ALL_NEW',
+      })
+    );
+
     return { statusCode: 200, body: JSON.stringify(result.Attributes) };
   } catch (error) {
     console.error(error);
@@ -80,7 +120,15 @@ export const deleteTodoHandler = async (event: APIGatewayProxyEvent): Promise<AP
   console.log('Event:', event);
   try {
     const id = event.pathParameters?.id;
-    await dynamo.delete({ TableName: TABLE_NAME, Key: { id } }).promise();
+
+    // DeleteCommand
+    await dynamo.send(
+      new DeleteCommand({
+        TableName: TABLE_NAME,
+        Key: { id },
+      })
+    );
+
     return { statusCode: 204, body: '' };
   } catch (error) {
     console.error(error);

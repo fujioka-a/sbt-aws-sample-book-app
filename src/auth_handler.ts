@@ -20,7 +20,7 @@ export const loginHandler = async (event: APIGatewayProxyEvent): Promise<APIGate
     // Cognito へログイン要求
     const command = new InitiateAuthCommand({
       AuthFlow: 'USER_PASSWORD_AUTH',
-      ClientId: process.env.COGNITO_USER_POOL_CLIENT_ID!, // 環境変数に格納してある
+      ClientId: process.env.USER_POOL_CLIENT_ID!,
       AuthParameters: {
         USERNAME: username,
         PASSWORD: password,

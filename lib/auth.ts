@@ -16,7 +16,7 @@ export class AuthStack extends cdk.Stack {
 
     const authLambdaProps: NodejsFunctionProps = {
       runtime: lambda.Runtime.NODEJS_20_X,
-      entry: 'src/auth.ts',
+      entry: 'src/auth_handler.ts',
       handler: 'loginHandler',
       environment: {
         USER_POOL_ID: props.userPoolId,

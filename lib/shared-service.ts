@@ -8,6 +8,7 @@ import * as cognito from 'aws-cdk-lib/aws-cognito';
 
 export interface ToDoProps extends cdk.StackProps {
   CognitoUserPool: cognito.UserPool;
+  CognitoUserClientId: string;
 }
 
 export class TodoStack extends cdk.Stack {

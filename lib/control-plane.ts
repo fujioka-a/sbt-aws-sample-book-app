@@ -15,6 +15,7 @@ export class ControlPlaneStack extends Stack {
   public readonly billingProvider: sbt.MockBillingProvider;
 
   public readonly userPool: cognito.UserPool;
+  public readonly userClientId: string;
 
   constructor(scope: Construct, id: string, props?: any) {
     super(scope, id, props);
@@ -26,27 +27,6 @@ export class ControlPlaneStack extends Stack {
     // billingProvider プロパティはクラスインスタンス
     this.billingProvider = new sbt.MockBillingProvider(this, 'MockBillingProvider');
 
-    // const aggregator = new sbt.FirehoseAggregator()
-
-    // const metering = new sbt.MeteringProvider()
-
-    // const targetRestApiBase = new aws_apigateway.RestApi(this, 'TargetRestApi', {
-    //   deployOptions: {
-    //     stageName: 'test',
-    //   },
-    // });
-
-    // new sbt.SampleRegistrationWebPage(
-    //   this,
-    //   'SampleRegistrationWebPage',
-    //   {
-    //     registrationAPI: targetRestApiBase,
-    //     userProvidedRequiredFieldsForRegistration: ['name', 'email'],
-    //     // autoDeleteBucketObjects: false,
-    //     // imageLogoUrl: 'https://example.com/logo.png',
-    //   }
-    // )
-
     const controlPlane = new sbt.ControlPlane(this, 'ControlPlane', {
       auth: cognitoAuth,
       systemAdminEmail: process.env.SYSTEM_ADMIN_EMAIL || 'default@example.com',
@@ -56,5 +36,6 @@ export class ControlPlaneStack extends Stack {
     this.regApiGatewayUrl = controlPlane.controlPlaneAPIGatewayUrl;
 
     this.userPool = cognitoAuth.userPool;
+    this.userClientId = cognitoAuth.userClientId
   }
 }

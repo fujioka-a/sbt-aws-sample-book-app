@@ -16,4 +16,5 @@ new AppPlaneStack(app, 'AppPlaneStack', {
 
 new TodoStack(app, 'SharedServiceStack', {
   CognitoUserPool: controlPlaneStack.userPool,
+  CognitoUserClientId: controlPlaneStack.userClientId,
 });
